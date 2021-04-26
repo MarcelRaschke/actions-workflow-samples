@@ -7,19 +7,27 @@ You use Azure starter templates present in this repo to easily create GitHub CI/
 ## Guidelines to select/author a new sample workflow
 
 **Folder Structure:**
-These workflow samples to automate your deployment workflows targeting various Azure services are organised under folders of same names. For example: `/AppService/asp.net-core-webapp-on-azure.yml`
+These workflow samples to automate your deployment workflows targeting various Azure services are organized under folders of same names. For example: `/AppService/asp.net-core-webapp-on-azure.yml`
 
 - [**/AppService** ](https://github.com/Azure/actions-workflow-samples/tree/master/AppService) Samples to configure and deploy web applications that scale with your business, to [Azure App Service](https://azure.microsoft.com/en-us/services/app-service/web/)
+
+- [**/AzureCLI**](https://github.com/Azure/actions-workflow-samples/tree/master/AzureCLI) Samples to run Azure CLI scripts to provision and manage Azure resources from a GitHub Action workflow
+
+- [**/ARM**](https://github.com/Azure/actions-workflow-samples/tree/master/ARM) Samples to deploy [Azure Resource Manager templates](https://docs.microsoft.com/bs-latn-ba/azure/azure-resource-manager/templates/)
+
+- [**/AzurePipelines**](https://github.com/Azure/actions-workflow-samples/tree/master/AzurePipelines) Samples to trigger a CD run in Azure Pipelines from a GitHub Action workflow
+
+- [**/Database**](https://github.com/Azure/actions-workflow-samples/tree/master/Database) Samples to deploy to a database on Azure, [Azure SQl database](https://azure.microsoft.com/en-us/services/sql-database/) or [Azure MySQL database](https://azure.microsoft.com/en-us/services/mysql/)
 
 - [**/FunctionApp**](https://github.com/Azure/actions-workflow-samples/tree/master/FunctionApp) Samples to build and deploy serverless apps to [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 
 - [**/Kubernetes**](https://github.com/Azure/actions-workflow-samples/tree/master/Kubernetes) Samples to deploy to any Kubernetes cluster on-premise or any cloud including [Azure Kubernetes service](https://azure.microsoft.com/en-us/services/kubernetes-service/)
 
-- [**/Database**](https://github.com/Azure/actions-workflow-samples/tree/master/Database) Samples to deploy to a database on Azure, [Azure SQl database](https://azure.microsoft.com/en-us/services/sql-database/) or [Azure MySQL database](https://azure.microsoft.com/en-us/services/mysql/)
+- [**/MachineLearning**](https://github.com/Azure/actions-workflow-samples/tree/master/MachineLearning) Samples to build and deploy machine learning models using [Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/)
 
-- [**/AzurePipelines**](https://github.com/Azure/actions-workflow-samples/tree/master/AzurePipelines) Samples to trigger a CD run in Azure Pipelines from a GitHub Action workflow
+- [**/Terraform**](https://github.com/Azure/actions-workflow-samples/tree/master/Terraform) Samples to deploy infrastructure to an Azure subscription using [Terraform Azure Provider](https://www.terraform.io/docs/providers/azurerm/index.html)
 
-- [**/AzureCLI**](https://github.com/Azure/actions-workflow-samples/tree/master/AzureCLI) Samples to run Azure CLI sripts to provision and manage Azure resources from a GitHub Action workflow
+- [**/AzurePolicy**](https://github.com/Azure/actions-workflow-samples/tree/master/AzurePolicy) Samples to trigger on-demand Azure Policy compliance scans from a GitHub Action workflow
 
 **Naming Notation:**
 * `os-ecosystem-ServiceName-on-azure`: example, linux-container-functionapp-on-azure.yml
@@ -30,7 +38,7 @@ These workflow samples to automate your deployment workflows targeting various A
 * Include 'name' for every workflow to indicate the purpose of the workflow
 * Ensure that starter workflows run on: push by default.  
 * For all secrets to be defined in the workflow, use UPPER_CASE with underscore delimiters instead of snake_case or camelCase.
-* Include a commented **Configuration section** which incldes hyperlinks to documentation for the Actions used and other pre-reqs.
+* Include a commented **Configuration section** which includes hyperlinks to documentation for the Actions used and other pre-reqs.
 * Define environment variables as part of configuration.  We think this will help provide visibility into the things that need to be configured as part of te workflow.
 * Ensure all Azure actions referenced in the workflow are pointing to a released version of the action and not from the master. For list of all released GitHub actions for Azure, please refer to https://github.com/Azure/actions
 
