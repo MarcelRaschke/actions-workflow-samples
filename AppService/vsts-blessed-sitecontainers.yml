@@ -1,0 +1,150 @@
+# Python to Linux Web App on Azure
+# Build your Python project and deploy it to Azure as a Linux Web App.
+
+trigger:
+- main
+
+variables:
+  # Azure Resource Manager connection
+  azureServiceConnectionId: 'sitecontainers-sc'
+
+  # Web app name
+  webAppName: 'vsts-blessed-3'
+
+  # # Agent VM image
+  # vmImageName: 'ubuntu-latest'
+
+  # Environment name
+  # environmentName: 'vsts-blessed-3'
+
+  # Project root folder (contains app.py and requirements.txt)
+  projectRoot: 'LinuxAppService/SiteContainers/test/samples/router-app'
+
+  # Python version
+  pythonVersion: '3.10'
+
+  # VM Pool name
+  vmPoolName: 'Default'
+
+  # Container Registry service connection
+  dockerRegistryServiceConnection: 'sitecontainersampleacr-sc'
+
+  # Container Registry name
+  containerRegistry: 'sitecontainerssampleacr.azurecr.io'             # replace with your ACR login server
+  helloAppImageName: 'test/hello-app'
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: BuildJob
+    pool:
+      name: $(vmPoolName)
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+      displayName: 'Use Python $(pythonVersion)'
+
+    - script: |
+        python -m venv antenv
+        source antenv/bin/activate
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+      workingDirectory: $(projectRoot)
+      displayName: "Install requirements"
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive files'
+      inputs:
+        rootFolderOrFile: '$(projectRoot)'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        replaceExistingArchive: true
+
+    - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+      displayName: 'Publish package'
+      artifact: drop
+
+    - task: Docker@2
+      displayName: 'Build and Push Docker hello app Image to ACR'
+      inputs:
+        containerRegistry: $(dockerRegistryServiceConnection)
+        repository: $(helloAppImageName)
+        command: buildAndPush
+        Dockerfile: 'hello-app/Dockerfile'
+        buildContext: 'hello-app'
+        tags: |
+          $(Build.BuildId)
+
+- stage: Deploy
+  displayName: 'Deploy Web App'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+    - job: DeployJob
+      displayName: 'Deploy Job'
+      pool:
+        name: $(vmPoolName)
+    # environment: $(environmentName)
+      steps:
+        - download: current
+          artifact: drop
+          displayName: 'Download build artifact'
+        
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '$(pythonVersion)'
+          displayName: 'Use Python $(pythonVersion)'
+
+        - task: AzureWebApp@1
+          displayName: 'Deploy Azure Web App : vsts-blessed-3'
+          inputs:
+            azureSubscription: $(azureServiceConnectionId)
+            appName: $(webAppName)
+            package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+            # sitecontainersConfig property to define all containers in the App Service except main container as it will be blessed app.
+            sitecontainersConfig: |
+              [
+                {
+                  "name": "hello-app",
+                  "image": "$(containerRegistry)/$(helloAppImageName):$(Build.BuildId)",
+                  "targetPort": 5001,
+                  "isMain": false
+                }
+              ]
+
+
+# Following properties can be set for each container in the sitecontainers-config list.
+# SiteContainer 
+# {
+#     name: string, // mandatory
+#     image: string, // mandatory
+#     isMain: boolean, // mandatory
+#     targetPort?: string,
+#     startupCommand?: string,
+#     authType?: AUTH_TYPE,
+#     userName?: string,
+#     passwordSecret?: string,
+#     userManagedIdentityClientId?: string,
+#     environmentVariables?: EnvironmentVariable[],
+#     volumeMounts?: VolumeMount[],
+#     inheritAppSettingsAndConnectionStrings?: boolean,
+#   }
+
+# AUTH_TYPE is any of the following:
+#   Anonymous,
+#   UserCredentials,
+#   SystemIdentity,
+#   UserAssigned
+
+# type EnvironmentVariable {
+#   name: string; // mandatory
+#   value: string; // mandatory
+# }
+# type VolumeMount {
+#     name: string; // mandatory
+#     mountPath: string; // mandatory
+#     readOnly?: boolean;
+# }

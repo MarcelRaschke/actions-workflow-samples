@@ -1,0 +1,97 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  dockerRegistryServiceConnection: 'sitecontainersampleacr-sc'      # replace with your ACR service connection name
+  containerRegistry: 'sitecontainerssampleacr.azurecr.io'             # replace with your ACR login server
+  routerAppImageName: 'test/router-app' 
+  helloAppImageName: 'test/hello-app'                            # image name in ACR
+  azureSubscription: 'sitecontainers-sc'               # replace with your Azure RM connection name
+  appName: 'vsts-docker2'                         # your App Service name
+  resourceGroup: 'multicontainer-euap'                     # your App Service's resource group
+
+pool:
+  vmImage: 'ubuntu-latest'
+  # name: Default
+
+steps:
+# one by one specify steps to build and push each container image to ACR
+- task: Docker@2
+  displayName: 'Build and Push Docker router-app Image to ACR'
+  inputs:
+    containerRegistry: $(dockerRegistryServiceConnection)
+    repository: $(routerAppImageName)
+    command: buildAndPush
+    Dockerfile: 'LinuxAppService/SiteContainers/test/samples/router-app/Dockerfile'
+    buildContext: 'LinuxAppService/SiteContainers/test/samples/router-app'
+    tags: |
+      $(Build.BuildId)
+
+- task: Docker@2
+  displayName: 'Build and Push Docker hello app Image to ACR'
+  inputs:
+    containerRegistry: $(dockerRegistryServiceConnection)
+    repository: $(helloAppImageName)
+    command: buildAndPush
+    Dockerfile: 'LinuxAppService/SiteContainers/test/samples/hello-app/Dockerfile'
+    buildContext: 'LinuxAppService/SiteContainers/test/samples/hello-app'
+    tags: |
+      $(Build.BuildId)
+
+- task: AzureWebAppContainer@1
+  displayName: 'Deploy to Linux App Service'
+  inputs:
+    azureSubscription: $(azureSubscription)
+    appName: $(appName)
+    resourceGroupName: $(resourceGroup)
+    # sitecontainersConfig property to define all containers in the App Service
+    sitecontainersConfig: |
+      [
+        {
+          "name": "main",
+          "image": "$(containerRegistry)/$(routerAppImageName):$(Build.BuildId)",
+          "targetPort": 5000,
+          "isMain": true
+        },
+        {
+          "name": "hello-app",
+          "image": "$(containerRegistry)/$(helloAppImageName):$(Build.BuildId)",
+          "targetPort": 5001,
+          "isMain": false
+        }
+      ]
+
+# Following properties can be set for each container in the sitecontainers-config list.
+# SiteContainer 
+# {
+#     name: string, // mandatory
+#     image: string, // mandatory
+#     isMain: boolean, // mandatory
+#     targetPort?: string,
+#     startupCommand?: string,
+#     authType?: AUTH_TYPE,
+#     userName?: string,
+#     passwordSecret?: string,
+#     userManagedIdentityClientId?: string,
+#     environmentVariables?: EnvironmentVariable[],
+#     volumeMounts?: VolumeMount[],
+#     inheritAppSettingsAndConnectionStrings?: boolean,
+#   }
+
+# AUTH_TYPE is any of the following:
+#   Anonymous,
+#   UserCredentials,
+#   SystemIdentity,
+#   UserAssigned
+
+# type EnvironmentVariable {
+#   name: string; // mandatory
+#   value: string; // mandatory
+# }
+# type VolumeMount {
+#     name: string; // mandatory
+#     mountPath: string; // mandatory
+#     readOnly?: boolean;
+# }
