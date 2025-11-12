@@ -14,7 +14,7 @@ env:
   PYTHON_VERSION: '3.x'        # Set the python version to use
   AZURE_WEBAPP_NAME: 'my-app'     # Set this to your application's name
   WORKING_DIRECTORY: '.'        # Set this to the path which is to be deployed to Web App. Defaults to the repository root
-  STARTUP_COMMAND: ''           # Set this to the startup command required to start the application. Default used is gunicorn for Flask/Django apps
+  STARTUP_COMMAND: ''           # Set this to the startup command required to start the application. Default used is gunicorn for Flask/Django apps. Best practice: When using startup commands besides gunicorn while deploying locally built setup, explicitly mention python3 with the startup command such as 'python3 -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}'
   SLOT_NAME: 'Production'    # Set this to your deployment slot name, default is 'Production'
 
 jobs:
